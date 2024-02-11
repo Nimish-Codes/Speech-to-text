@@ -80,29 +80,45 @@ import streamlit as st
 # if __name__ == '__main__':
 #     main()
 
-from streamlit_webrtc import AudioProcessorBase, ClientSettings, WebRtcMode, webrtc_streamer
 
-class AudioRecorder(AudioProcessorBase):
-    def recv(self, frame):
-        return frame
+import sounddevice as sd
+import numpy as np
+import wave
+
+from settings import DURATION, WAVE_OUTPUT_FILE
+
+def record_audio(duration, output_file):
+    fs = 44100  # Sample rate
+    seconds = duration
+
+    myrecording = sd.rec(int(seconds * fs), samplerate=fs, channels=2)
+    sd.wait()  # Wait until recording is finished
+
+    # Save the recorded audio to a WAV file
+    with wave.open(output_file, 'wb') as wf:
+        wf.setnchannels(2)
+        wf.setsampwidth(2)
+        wf.setframerate(fs)
+        wf.writeframes(b''.join(myrecording))
 
 def main():
     st.title("Audio Recorder Example")
 
-    if st.button("record"):
-        webrtc_ctx = webrtc_streamer(
-            key="audio-recorder",
-            mode=WebRtcMode.SENDRECV,
-            audio_processor_factory=AudioRecorder,
-            client_settings=ClientSettings(
-                rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}
-        ),
-    )
+    if st.button("Record"):
+        record_audio(DURATION, WAVE_OUTPUT_FILE)
+        st.success("Recording completed!")
 
-    if st.button("play"):
-        if webrtc_ctx.audio_receiver:
-            st.audio(webrtc_ctx.audio_receiver)
+    if st.button("Play"):
+        try:
+            audio_file = open(WAVE_OUTPUT_FILE, 'rb')
+            audio_bytes = audio_file.read()
+            st.audio(audio_bytes, format='audio/wav')
+        except FileNotFoundError:
+            st.write("Please record sound first")
+        except Exception as e:
+            st.write(f"Error occurred: {e}")
 
 if __name__ == "__main__":
     main()
+
 
