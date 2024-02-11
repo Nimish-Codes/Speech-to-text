@@ -1,26 +1,54 @@
 import streamlit as st
-import librosa
-from src.sound import sound
-from settings import IMAGE_DIR, DURATION, WAVE_OUTPUT_FILE
+import wave
+import pyaudio
+from settings import DURATION, WAVE_OUTPUT_FILE
 
-def convert_audio_to_text(audio_file_path):
-    # Basic conversion using librosa
-    audio, sr = librosa.load(audio_file_path)
-    text = "This is a placeholder for converted text"
-    return text
+def record_audio(duration, output_file):
+    CHUNK = 1024
+    FORMAT = pyaudio.paInt16
+    CHANNELS = 2
+    RATE = 44100
+
+    audio = pyaudio.PyAudio()
+
+    stream = audio.open(format=FORMAT,
+                        channels=CHANNELS,
+                        rate=RATE,
+                        input=True,
+                        frames_per_buffer=CHUNK)
+
+    frames = []
+    stop_recording = False
+
+    st.write(f"Recording for {duration} seconds...")
+
+    # Continuously record audio until stop_recording is True or duration is reached
+    for i in range(0, int(RATE / CHUNK * duration)):
+        if stop_recording:
+            break
+        data = stream.read(CHUNK)
+        frames.append(data)
+
+    st.write("Recording completed!")
+
+    stream.stop_stream()
+    stream.close()
+    audio.terminate()
+
+    wf = wave.open(output_file, 'wb')
+    wf.setnchannels(CHANNELS)
+    wf.setsampwidth(audio.get_sample_size(FORMAT))
+    wf.setframerate(RATE)
+    wf.writeframes(b''.join(frames))
+    wf.close()
 
 def main():
-    # Check if 'Record' button is clicked
     if st.button('Record'):
-        with st.spinner(f'Recording for {DURATION} seconds ....'):
-            # Assuming sound.record() method records sound
-            sound.record()
-        st.success("Recording completed")
+        record_audio(DURATION, WAVE_OUTPUT_FILE)
 
-    # Check if 'Stop Recording' button is clicked
+    # Add a 'Stop Recording' button to stop the recording process
     if st.button('Stop Recording'):
-        # Assuming sound.stop() method stops recording
-        sound.stop()
+        stop_recording = True
 
     # Check if 'Convert to Text' button is clicked
     if st.button('Convert to Text'):
@@ -32,10 +60,8 @@ def main():
         except Exception as e:
             st.write(f"Error occurred: {e}")
 
-    # Check if 'Play' button is clicked
     if st.button('Play'):
         try:
-            # Read audio file
             audio_file = open(WAVE_OUTPUT_FILE, 'rb')
             audio_bytes = audio_file.read()
             st.audio(audio_bytes, format='audio/wav')
