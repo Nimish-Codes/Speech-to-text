@@ -80,18 +80,28 @@ import streamlit as st
 # if __name__ == '__main__':
 #     main()
 
+from streamlit_webrtc import AudioProcessorBase, ClientSettings, WebRtcMode, webrtc_streamer
 
-from st_audiorec import st_audiorec
+class AudioRecorder(AudioProcessorBase):
+    def recv(self, frame):
+        return frame
 
 def main():
-    st.title("Custom Audio Recorder Example")
+    st.title("Audio Recorder Example")
 
-    if st.button("Record"):
-        audio_file = st_audiorec(label="Record your voice")
+    if st.button("record"):
+        webrtc_ctx = webrtc_streamer(
+            key="audio-recorder",
+            mode=WebRtcMode.SENDRECV,
+            audio_processor_factory=AudioRecorder,
+            client_settings=ClientSettings(
+                rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}
+        ),
+    )
 
-    if st.button("Play"):
-        if audio_file is not None:
-            st.audio(audio_file)
+    if st.button("play"):
+        if webrtc_ctx.audio_receiver:
+            st.audio(webrtc_ctx.audio_receiver)
 
 if __name__ == "__main__":
     main()
