@@ -81,10 +81,13 @@ import streamlit as st
 #     main()
 
 
+from st_audiorec import st_audiorec
+
 def main():
-    st.title("Audio Recorder Example")
+    st.title("Custom Audio Recorder Example")
+
     if st.button("Record"):
-        audio_file = st.audio_recorder(label="Record your voice")
+        audio_file = st_audiorec(label="Record your voice")
 
     if st.button("Play"):
         if audio_file is not None:
@@ -92,3 +95,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
