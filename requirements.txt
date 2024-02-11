@@ -2,3 +2,4 @@ streamlit
 wave
 numpy
 sounddevice
+settings
