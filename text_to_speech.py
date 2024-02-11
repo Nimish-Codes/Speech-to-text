@@ -1,7 +1,14 @@
 import streamlit as st
 import wave
 import pyaudio
+import librosa
 from settings import DURATION, WAVE_OUTPUT_FILE
+
+def convert_audio_to_text(audio_file_path):
+    # Basic conversion using librosa
+    audio, sr = librosa.load(audio_file_path)
+    text = "This is a placeholder for converted text"
+    return text
 
 def record_audio(duration, output_file):
     CHUNK = 1024
